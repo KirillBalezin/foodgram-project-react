@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.authtoken.models import Token
+from drf_base64.fields import Base64ImageField
 
 from users.models import Follow
 from recipes.models import Recipe
@@ -11,77 +10,63 @@ User = get_user_model()
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',)
-
-
-class PasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(required=True)
-    current_password = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ('email', 'id', 'username',
+                  'first_name', 'last_name', 'password',)
+
+    def create(self, validated_data):
+        '''Создание пользователя.'''
+        user = User.objects.create(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
 
-class SpecialRecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
+        read_only_fields = ('id', 'name', 'image', 'cooking_time',)
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(source='key')
-
-    class Meta:
-        model = Token
-        fields = ('token',)
-
-
-class FollowerSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
-    following = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
-
-    def validate(self, data):
-        user = data.get('user')
-        following = data.get('following')
-        if user == following:
-            raise serializers.ValidationError('На себя подписаться нельзя')
-        return data
+class FollowSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField(source='author.email')
+    id = serializers.ReadOnlyField(source='author.id')
+    username = serializers.ReadOnlyField(source='author.username')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.ReadOnlyField(source='author.recipes.count')
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('user', 'following')
         model = Follow
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=['user', 'following'],
-            )
-        ]
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        )
 
-
-class ShowFollowerSerializer(serializers.ModelSerializer):
-    recipes = SpecialRecipeSerializer(many=True, required=True)
-    is_subscribed = serializers.SerializerMethodField('check_if_is_subscribed')
-    recipes_count = serializers.SerializerMethodField('get_recipes_count')
-
-    class Meta:
-        model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed', 'recipes', 'recipes_count',)
-
-    def check_if_is_subscribed(self, obj):
-        '''Проверка подписки.'''
-        user = self.context.get('request').user
+    def get_is_subscribed(self, obj):
+        '''Статус подписки на автора.'''
+        request = self.context.get('request')
         return Follow.objects.filter(
-            user=user, following=obj.following
-        ).exists()
+            author=obj.author, user=request.user).exists()
 
-    def get_recipes_count(self, obj):
-        count = obj.recipes.all().count()
-        return count
+    def get_recipes(self, obj):
+        '''Получение списка рецептов автора.'''
+        limit = self.context.get('request').GET.get('recipes_limit')
+        recipe_obj = obj.author.recipes.all()
+        if limit:
+            recipe_obj = recipe_obj[:int(limit)]
+        serializer = ShortRecipeSerializer(recipe_obj, many=True)
+        return serializer.data

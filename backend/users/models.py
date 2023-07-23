@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+
+from users.validators import validate_username_me
 
 MAX_LENGTH = 150
 MAX_LENGTH_EMAIL = 254
@@ -9,8 +11,9 @@ MAX_LENGTH_EMAIL = 254
 class User(AbstractUser):
     '''Измененная модель пользователя.'''
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ("username",)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name',)
+    username_validator = UnicodeUsernameValidator()
 
     email = models.EmailField(
         max_length=MAX_LENGTH_EMAIL,
@@ -19,12 +22,7 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=MAX_LENGTH,
         unique=True,
-        validators=[
-            RegexValidator(
-                regex=r'^[\w.@+-]+$',
-                message='Не допускаются: пробел и символы, кроме . @ + - _',
-            ),
-        ]
+        validators=[username_validator, validate_username_me, ]
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH,
@@ -49,7 +47,7 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
-    following = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         related_name='following',
         on_delete=models.CASCADE,
@@ -59,4 +57,4 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        unique_together = ('user', 'following')
+        unique_together = ('user', 'author')

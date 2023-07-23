@@ -9,13 +9,13 @@ class CustomUserAdmin(UserAdmin):
     '''Настройки админки для модели User.'''
     search_fields = ('email', 'username')
     list_filter = ('email', 'username')
-    ordering = ('pk',)
+    ordering = ('username',)
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
     '''Настройки админки для модели Subscription.'''
-    list_display = ('user', 'following')
-    search_fields = ('user__username', 'following__username')
+    list_display = ('user', 'author')
+    search_fields = ('user__username', 'author__username')
 
 
 admin.site.register(User, CustomUserAdmin)

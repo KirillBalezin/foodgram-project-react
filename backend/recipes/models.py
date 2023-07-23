@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from colorfield.fields import ColorField
 
 
 User = get_user_model()
@@ -11,13 +12,19 @@ MAX_LENGTH_COLOR = 7
 
 class Tag(models.Model):
     '''Модель тега.'''
+
+    COLOR_PALETTE = [
+        ('#FFFFFF', 'white', ),
+        ('#000000', 'black', ),
+    ]
+
     name = models.CharField(
         max_length=MAX_LENGTH_NAME,
         unique=True,
         verbose_name='Название тега',
     )
-    color = models.CharField(
-        max_length=MAX_LENGTH_COLOR,
+    color = ColorField(
+        samples=COLOR_PALETTE,
         unique=True,
         verbose_name='Цвет тега'
     )
@@ -114,6 +121,7 @@ class TagsInRecipe(models.Model):
     class Meta:
         verbose_name = "Теги в рецепте"
         verbose_name_plural = verbose_name
+        unique_together = ('tag', 'recipe')
 
 
 class IngredientAmount(models.Model):
@@ -135,6 +143,7 @@ class IngredientAmount(models.Model):
     class Meta:
         verbose_name = 'Количество ингредиентов в рецепте'
         verbose_name_plural = verbose_name
+        unique_together = ('ingredient', 'recipe')
 
 
 class Favorite(models.Model):
@@ -142,19 +151,18 @@ class Favorite(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorite',
         verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorite',
         verbose_name='Рецепт',
     )
 
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = verbose_name
+        default_related_name = 'favorite'
         unique_together = ('user', 'recipe')
 
 
@@ -163,17 +171,16 @@ class ShoppingCart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shopping_cart',
         verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shopping_cart',
         verbose_name='Рецепт',
     )
 
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = verbose_name
+        default_related_name = 'shopping_cart'
         unique_together = ('user', 'recipe')

@@ -10,3 +10,4 @@ PyYAML==6.0
 python-dotenv==1.0.0
 drf-base64==2.0
 django-filter==23.2
+django-colorfield==0.9.0
