@@ -57,11 +57,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return CreateRecipeSerializer
         return ShowRecipeSerializer
 
-    # def get_serializer_context(self):
-    #     context = super().get_serializer_context()
-    #     context.update({'request': self.request})
-    #     return context
-
     def add_to(self, model, user, pk):
         '''Добавление рецепта в избранное / корзину.'''
         if model.objects.filter(user=user, recipe__id=pk).exists():
