@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import (Tag, Ingredient, Recipe, IngredientAmount,
-                     Favorite, ShoppingCart)
+from .models import (Favorite, Ingredient, IngredientAmount, Recipe,
+                     ShoppingCart, Tag)
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -50,17 +50,6 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def count_added(self, obj):
         return obj.favorite.count()
-
-
-# class IngredientInRecipeAdmin(admin.ModelAdmin):
-#     '''Кастомная админка для модели IngredientAmount.'''
-#     list_display = (
-#         'id',
-#         'recipe',
-#         'ingredient',
-#         'amount'
-#     )
-#     search_fields = ('recipe__name', 'ingredient__name')
 
 
 class FavoriteShoppingAdmin(admin.ModelAdmin):
