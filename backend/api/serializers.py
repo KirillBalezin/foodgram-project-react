@@ -202,13 +202,8 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         tags = self.initial_data.get('tags', False)
         if not tags:
             raise ValidationError('Хотя бы один тэг должен быть указан.')
-        # unique_tags = []
         if len(set(tags)) != len(tags):
             raise ValidationError('Нельзя дублировать теги.')
-        # for tag in tags:
-        #     if tag in unique_tags:
-        #         raise ValidationError('Нельзя дублировать теги.')
-        #     unique_tags.append(tag)
         return data
 
     def create(self, validated_data):

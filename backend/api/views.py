@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import LimitPagination
-from api.permissions import AuthorOrReadOnly
+from api.permissions import AuthorOrReadOnly, ReadOnly
 from api.serializers import (CreateRecipeSerializer, FollowSerializer,
                              IngredientSerializer, ShortRecipeSerializer,
                              ShowRecipeSerializer, TagSerializer)
@@ -68,21 +68,23 @@ class CustomUserViewSet(UserViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = (ReadOnly,)
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_class = IngredientFilter
+    filterset_class = IngredientFilter
     search_fields = ('name',)
+    permission_classes = (ReadOnly,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (AuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
+    filterset_class = RecipeFilter
     pagination_class = LimitPagination
 
     def get_serializer_class(self):
@@ -151,7 +153,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         '''Скачивание корзины.'''
         user = request.user
         if not user.shopping_cart.exists():
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Ошибка': 'Список покупок пуст'},
+                            status=status.HTTP_400_BAD_REQUEST)
         ingredients = IngredientAmount.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
