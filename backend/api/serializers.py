@@ -188,11 +188,11 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             raise ValidationError(
                 'Хотя бы один ингредиент должен быть указан.'
             )
-        unique_ingredient = []
+        unique_ingredient = set()
         for ingredient in ingredients:
             if ingredient['id'] in unique_ingredient:
                 raise ValidationError('Нельзя дублировать ингредиенты.')
-            unique_ingredient.append(ingredient['id'])
+            unique_ingredient.add(ingredient['id'])
             if int(ingredient['amount']) < 1:
                 raise ValidationError('Количество не может быть менее 1.')
         return data
@@ -202,11 +202,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         tags = self.initial_data.get('tags', False)
         if not tags:
             raise ValidationError('Хотя бы один тэг должен быть указан.')
-        unique_tags = []
-        for tag in tags:
-            if tag in unique_tags:
-                raise ValidationError('Нельзя дублировать теги.')
-            unique_tags.append(tag)
+        # unique_tags = []
+        if len(set(tags)) != len(tags):
+            raise ValidationError('Нельзя дублировать теги.')
+        # for tag in tags:
+        #     if tag in unique_tags:
+        #         raise ValidationError('Нельзя дублировать теги.')
+        #     unique_tags.append(tag)
         return data
 
     def create(self, validated_data):
