@@ -9,12 +9,12 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import LimitPagination
 from api.permissions import AuthorOrReadOnly
 from api.serializers import (CreateRecipeSerializer, FollowSerializer,
                              IngredientSerializer, ShortRecipeSerializer,
                              ShowRecipeSerializer, TagSerializer)
-from api.filters import IngredientFilter, RecipeFilter
 from recipes.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from users.models import Follow
