@@ -30,8 +30,6 @@ class RecipeFilter(FilterSet):
         if value and user.is_authenticated:
             return Recipe.objects.filter(favorite__user=user)
         return Recipe.objects.all()
-        #     return queryset.filter(favorites__user=user)
-        # return queryset
 
     def filter_shopping_cart(self, queryset, name, value):
         user = self.request.user
